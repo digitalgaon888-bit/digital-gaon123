@@ -14,20 +14,21 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 
-// MongoDB Connection
+// Start Server First (Important for Mocking)
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`--- BACKEND IS LIVE ---`);
+    console.log(`Server running on: http://localhost:${PORT}`);
+    console.log(`To see real OTP, check your Gmail after configuring .env`);
+});
+
+// MongoDB Connection (Attempt in background)
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
-        console.log('Connected to MongoDB');
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
+        console.log('--- MONGODB CONNECTED ---');
     })
     .catch(err => {
-        console.error('MongoDB connection error:', err);
-        if (process.env.DEV_MODE === 'true') {
-            console.log('DEV_MODE: Proceeding with mock storage in memory instead of MongoDB.');
-            app.listen(PORT, '0.0.0.0', () => {
-                console.log(`Server is running on port ${PORT} (MOCK DB MODE)`);
-            });
-        }
+        console.log('--- DATABASE NOTICE ---');
+        console.log('MongoDB not found. Proceeding in MOCK DB MODE (In-memory).');
     });
+
+
