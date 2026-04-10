@@ -10,8 +10,12 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const savedEmail = localStorage.getItem('userEmail');
     if (token) {
       setIsAuthenticated(true);
+    }
+    if (savedEmail) {
+      setUserEmail(savedEmail);
     }
   }, []);
 
@@ -25,6 +29,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
     setIsAuthenticated(false);
     setUserEmail(null);
   };
@@ -53,7 +58,7 @@ function App() {
             path="/dashboard" 
             element={
               isAuthenticated ? (
-                <Dashboard onLogout={handleLogout} />
+                <Dashboard onLogout={handleLogout} userEmail={userEmail} />
               ) : (
                 <Navigate to="/" />
               )

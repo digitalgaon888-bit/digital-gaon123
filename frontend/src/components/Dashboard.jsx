@@ -1,20 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Home from './Home';
 import MyListings from './MyListings';
 import AddProduct from './AddProduct';
 import Wishlist from './Wishlist';
-import Messages from './Messages';
+
 import Profile from './Profile';
 
-const Dashboard = ({ onLogout }) => {
+const Dashboard = ({ onLogout, userEmail }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [user, setUser] = useState({
-    name: 'Tejas Patil',
-    village: 'Warud, Maharashtra',
-    phone: '+91 9876543210'
+    name: '',
+    village: '',
+    phone: '',
   });
+
+  // Fetch profile from DB on mount
+  useEffect(() => {
+    const email = userEmail || localStorage.getItem('userEmail');
+    if (email) {
+      axios.get(`/api/user/profile?email=${encodeURIComponent(email)}`)
+        .then(res => {
+          const data = res.data;
+          setUser({
+            name: data.name || email.split('@')[0],
+            village: data.village || '',
+            phone: data.phone || '',
+          });
+        })
+        .catch(err => {
+          console.log('Could not fetch profile:', err.message);
+          // Use email username as fallback name
+          setUser(prev => ({ ...prev, name: email.split('@')[0] }));
+        });
+    }
+  }, [userEmail]);
+
+  const handleProfileUpdate = (updatedUser) => {
+    setUser(updatedUser);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -26,10 +52,9 @@ const Dashboard = ({ onLogout }) => {
         return <AddProduct />;
       case 'wishlist':
         return <Wishlist />;
-      case 'messages':
-        return <Messages />;
+
       case 'profile':
-        return <Profile user={user} />;
+        return <Profile user={user} userEmail={userEmail} onUpdate={handleProfileUpdate} />;
       default:
         return <Home userVillage={user.village} />;
     }

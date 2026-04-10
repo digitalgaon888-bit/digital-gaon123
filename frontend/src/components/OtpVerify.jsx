@@ -14,8 +14,9 @@ const OtpVerify = ({ email, onVerifySuccess }) => {
             const res = await axios.post('/api/auth/verify-otp', { email, otp });
             const { token } = res.data;
             
-            // Store JWT token
+            // Store JWT token and email
             localStorage.setItem('token', token);
+            localStorage.setItem('userEmail', email);
             onVerifySuccess();
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid or expired OTP. Please try again.');

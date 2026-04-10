@@ -5,7 +5,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'listings', label: 'My Listings', icon: '📦' },
     { id: 'wishlist', label: 'Wishlist', icon: '❤️' },
-    { id: 'messages', label: 'Messages', icon: '💬' },
+
     { id: 'profile', label: 'Profile Settings', icon: '👤' },
   ];
 

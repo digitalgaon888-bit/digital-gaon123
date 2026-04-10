@@ -1,16 +1,98 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Home = ({ userVillage }) => {
-  const nearbyProducts = [
-    { id: 1, title: 'Fresh Desi Ghee', price: '₹650', location: 'Nagpur', img: 'https://images.unsplash.com/photo-1582213702164-9092403666d6?auto=format&fit=crop&q=80&w=400' },
-    { id: 2, title: 'Tractor Spares', price: '₹1,200', location: 'Warud', img: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400' },
-    { id: 3, title: 'Organic Wheat (1kg)', price: '₹45', location: 'Katol', img: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=400' },
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [wishlistIds, setWishlistIds] = useState([]);
 
-  const latestListings = [
-    { id: 4, title: 'Cotton Harvest Help', price: '₹350/day', location: 'Morshi', img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=400' },
-    { id: 5, title: 'Bicycle - Old Model', price: '₹2,500', location: 'Amravati', img: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=400' },
-  ];
+  const email = localStorage.getItem('userEmail') || 'guest@example.com';
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/products');
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchWishlist = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/user/wishlist?email=${encodeURIComponent(email)}`);
+        setWishlistIds(response.data.map(item => item._id));
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+      }
+    };
+
+    fetchProducts();
+    fetchWishlist();
+  }, []);
+
+  const toggleWishlist = async (productId) => {
+    const isInWishlist = wishlistIds.includes(productId);
+
+    try {
+      if (isInWishlist) {
+        await axios.delete('http://localhost:5000/api/user/wishlist', {
+          data: { email, productId }
+        });
+        setWishlistIds(prev => prev.filter(id => id !== productId));
+      } else {
+        await axios.post('http://localhost:5000/api/user/wishlist', { email, productId });
+        setWishlistIds(prev => [...prev, productId]);
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+    }
+  };
+
+  // For demonstration, dividing products arbitrarily since we don't have location logic fully implemented yet
+  const nearbyProducts = products.slice(0, 3);
+  const latestListings = products.slice(3, 10); // Show next 7
+
+  const renderProductCard = (product) => (
+    <div key={product._id} className="product-card">
+      <div style={{ position: 'relative' }}>
+        <img src={product.img} alt={product.title} className="product-img" />
+        <button
+          onClick={() => toggleWishlist(product._id)}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            background: 'rgba(0,0,0,0.5)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            cursor: 'pointer',
+            fontSize: '1.1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'var(--transition)',
+            backdropFilter: 'blur(4px)',
+          }}
+          title={wishlistIds.includes(product._id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+        >
+          {wishlistIds.includes(product._id) ? '❤️' : '🤍'}
+        </button>
+      </div>
+      <div className="product-info">
+        <div className="product-price">₹{product.price}</div>
+        <div className="product-title">{product.title}</div>
+        <div className="product-meta">
+          <span>{product.location}</span>
+          <span style={{ color: 'var(--success)', fontWeight: '600' }}>In Stock</span>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="home-page">
@@ -24,40 +106,25 @@ const Home = ({ userVillage }) => {
           <h2 style={{ fontSize: '1.5rem', marginBottom: 0 }}>Nearby Products</h2>
           <span style={{ fontSize: '0.875rem', color: 'var(--primary)', cursor: 'pointer' }}>View all →</span>
         </div>
-        <div className="card-grid">
-          {nearbyProducts.map(product => (
-            <div key={product.id} className="product-card">
-              <img src={product.img} alt={product.title} className="product-img" />
-              <div className="product-info">
-                <div className="product-price">{product.price}</div>
-                <div className="product-title">{product.title}</div>
-                <div className="product-meta">
-                  <span>{product.location}</span>
-                  <span style={{ color: 'var(--success)', fontWeight: '600' }}>In Stock</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        
+        {loading ? (
+          <p>Loading products...</p>
+        ) : nearbyProducts.length === 0 ? (
+          <p>No products available right now.</p>
+        ) : (
+          <div className="card-grid">
+            {nearbyProducts.map(product => renderProductCard(product))}
+          </div>
+        )}
       </div>
 
       <div>
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Latest Listings</h2>
-        <div className="card-grid">
-          {latestListings.map(product => (
-            <div key={product.id} className="product-card">
-              <img src={product.img} alt={product.title} className="product-img" />
-              <div className="product-info">
-                <div className="product-price">{product.price}</div>
-                <div className="product-title">{product.title}</div>
-                <div className="product-meta">
-                  <span>{product.location}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>2 hours ago</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        {latestListings.length > 0 && (
+          <div className="card-grid">
+            {latestListings.map(product => renderProductCard(product))}
+          </div>
+        )}
       </div>
 
       <div style={{ 

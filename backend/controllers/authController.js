@@ -1,11 +1,7 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const Otp = require('../models/Otp');
+const db = require('../database');
 const jwt = require('jsonwebtoken');
-
-// IN-MEMORY FALLBACK (for when MongoDB is not connected)
-const otpCache = new Map();
-
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -34,25 +30,23 @@ exports.sendOtp = async (req, res) => {
 
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
-        // Save OTP to DB or Memory
-        if (process.env.DEV_MODE === 'true') {
-            console.log('DEV_MODE is true. Skipping DB operation.');
-            otpCache.set(email, { otp, expiresAt });
+        // Save OTP to SQLite (upsert)
+        const existing = db.prepare('SELECT * FROM otps WHERE email = ?').get(email);
+        if (existing) {
+            db.prepare('UPDATE otps SET otp = ?, expiresAt = ? WHERE email = ?').run(otp, expiresAt, email);
         } else {
-            console.log('Attempting to save OTP...');
-            try {
-                await Otp.findOneAndUpdate(
-                    { email },
-                    { otp, expiresAt },
-                    { upsert: true, new: true }
-                );
-                console.log('OTP saved to MongoDB successfully.');
-            } catch (dbError) {
-                console.log('DB Save Error (Using In-Memory Fallback):', dbError.message);
-                otpCache.set(email, { otp, expiresAt });
-            }
+            db.prepare('INSERT INTO otps (email, otp, expiresAt) VALUES (?, ?, ?)').run(email, otp, expiresAt);
+        }
+        console.log('OTP saved to SQLite.');
+
+        if (process.env.DEV_MODE === 'true') {
+            console.log('DEV_MODE is true. OTP:', otp);
+            return res.status(200).json({ 
+                message: 'OTP sent successfully (DEV MODE: 123456)', 
+                devOtp: '123456' 
+            });
         }
 
         // Send email
@@ -104,24 +98,9 @@ exports.verifyOtp = async (req, res) => {
             return res.status(200).json({ message: 'OTP verified successfully (DEV MODE)', token });
         }
 
-        let otpRecord = null;
-        
-        try {
-            otpRecord = await Otp.findOne({ email, otp });
-        } catch (dbError) {
-            console.log('DB Find Error (Checking In-Memory Fallback):', dbError.message);
-        }
+        const otpRecord = db.prepare('SELECT * FROM otps WHERE email = ? AND otp = ?').get(email, otp);
 
-        // Check memory if DB failed or returned nothing
-        if (!otpRecord) {
-            const cached = otpCache.get(email);
-            if (cached && cached.otp === otp && cached.expiresAt > new Date()) {
-                otpRecord = cached;
-                console.log('OTP verified via In-Memory Cache.');
-            }
-        }
-
-        if (!otpRecord) {
+        if (!otpRecord || new Date(otpRecord.expiresAt) < new Date()) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
 
@@ -129,10 +108,7 @@ exports.verifyOtp = async (req, res) => {
         const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         // Cleanup
-        try {
-            await Otp.deleteOne({ email });
-        } catch (e) {}
-        otpCache.delete(email);
+        db.prepare('DELETE FROM otps WHERE email = ?').run(email);
 
         res.status(200).json({
             message: 'OTP verified successfully',

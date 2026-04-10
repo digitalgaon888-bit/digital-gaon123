@@ -1,11 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-const Profile = ({ user, onUpdate }) => {
+const Profile = ({ user, userEmail, onUpdate }) => {
   const [formData, setFormData] = useState({
-    name: user?.name || 'Tejas Patil',
-    village: user?.village || 'Warud, Maharashtra',
-    phone: user?.phone || '+91 9876543210',
+    name: user?.name || '',
+    village: user?.village || '',
+    phone: user?.phone || '',
+    avatar: '',
   });
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
+
+  // Sync form when user prop changes (e.g. after DB fetch in Dashboard)
+  useEffect(() => {
+    const email = userEmail || localStorage.getItem('userEmail');
+    let loadedAvatar = '';
+    if (email) {
+      loadedAvatar = localStorage.getItem(`avatar_${email}`) || '';
+    }
+
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        village: user.village || '',
+        phone: user.phone || '',
+        avatar: loadedAvatar,
+      });
+    } else {
+      setFormData(prev => ({ ...prev, avatar: loadedAvatar }));
+    }
+  }, [user, userEmail]);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    const email = userEmail || localStorage.getItem('userEmail');
+    if (!email) {
+      setSaveMsg('❌ User email not found. Please re-login.');
+      return;
+    }
+
+    setSaving(true);
+    setSaveMsg('');
+    try {
+      const res = await axios.put('/api/user/profile', {
+        email,
+        name: formData.name,
+        village: formData.village,
+        phone: formData.phone,
+        avatar: formData.avatar,
+      });
+      setSaveMsg('✅ Profile saved successfully!');
+      // Notify parent so Header name updates too
+      if (onUpdate) {
+        onUpdate({
+          name: res.data.name || formData.name,
+          village: res.data.village || formData.village,
+          phone: res.data.phone || formData.phone,
+        });
+      }
+    } catch (err) {
+      console.error('Profile save error:', err);
+      setSaveMsg('❌ Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSaveMsg(''), 3000);
+    }
+  };
 
   return (
     <div className="profile-page">
@@ -18,15 +78,16 @@ const Profile = ({ user, onUpdate }) => {
             height: '100px', 
             borderRadius: '50%', 
             margin: '0 auto 1.5rem',
-            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+            background: formData.avatar ? `url(${formData.avatar}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '2.5rem',
-            position: 'relative'
+            position: 'relative',
+            color: 'white'
           }}>
-            {formData.name[0]}
-            <div style={{ 
+            {!formData.avatar && (formData.name ? formData.name[0]?.toUpperCase() : '?')}
+            <label style={{ 
               position: 'absolute', 
               bottom: '0', 
               right: '0', 
@@ -39,14 +100,38 @@ const Profile = ({ user, onUpdate }) => {
               justifyContent: 'center',
               fontSize: '1rem',
               cursor: 'pointer',
-              border: '2px solid var(--bg)'
-            }}>📸</div>
+              border: '2px solid var(--bg)',
+              color: 'black'
+            }}>
+              📸
+              <input 
+                type="file" 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const base64String = reader.result;
+                      setFormData(prev => ({ ...prev, avatar: base64String }));
+                      // Save to local storage for persistence for this specific user
+                      const email = userEmail || localStorage.getItem('userEmail');
+                      if (email) {
+                        localStorage.setItem(`avatar_${email}`, base64String);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }} 
+              />
+            </label>
           </div>
-          <h2 style={{ marginBottom: '0.25rem' }}>{formData.name}</h2>
+          <h2 style={{ marginBottom: '0.25rem' }}>{formData.name || 'User'}</h2>
           <p style={{ marginBottom: 0 }}>📍 {formData.village}</p>
         </div>
 
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={handleSave}>
           <div className="form-group">
             <label>Full Name</label>
             <input 
@@ -66,17 +151,23 @@ const Profile = ({ user, onUpdate }) => {
           </div>
 
           <div className="form-group">
-            <label>Phone Number (Read-only)</label>
+            <label>Phone Number</label>
             <input 
               className="form-input" 
               value={formData.phone} 
-              readOnly 
-              style={{ opacity: 0.6, cursor: 'not-allowed' }}
+              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              placeholder="Enter your phone number"
             />
           </div>
 
-          <button className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', padding: '1rem' }}>
-            💾 Save Changes
+          {saveMsg && (
+            <div style={{ textAlign: 'center', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              {saveMsg}
+            </div>
+          )}
+
+          <button className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', padding: '1rem' }} disabled={saving}>
+            {saving ? '⏳ Saving...' : '💾 Save Changes'}
           </button>
         </form>
 
