@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 
 const Wishlist = () => {
   const [savedItems, setSavedItems] = useState([]);
@@ -10,7 +11,7 @@ const Wishlist = () => {
   const fetchWishlist = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/user/wishlist?email=${encodeURIComponent(email)}`);
+      const response = await axios.get(`${API_BASE_URL}/api/user/wishlist?email=${encodeURIComponent(email)}`);
       setSavedItems(response.data);
     } catch (error) {
       console.error('Error fetching wishlist:', error);
@@ -25,7 +26,7 @@ const Wishlist = () => {
 
   const handleRemove = async (productId) => {
     try {
-      await axios.delete('http://localhost:5000/api/user/wishlist', {
+      await axios.delete(`${API_BASE_URL}/api/user/wishlist`, {
         data: { email, productId }
       });
       setSavedItems(prev => prev.filter(item => item._id !== productId));

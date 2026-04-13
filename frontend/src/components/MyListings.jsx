@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 
 const MyListings = () => {
   const [userProducts, setUserProducts] = useState([]);
@@ -16,7 +17,7 @@ const MyListings = () => {
     try {
       setLoading(true);
       const email = localStorage.getItem('userEmail') || 'guest@example.com';
-      const response = await axios.get(`http://localhost:5000/api/products/my?email=${encodeURIComponent(email)}`);
+      const response = await axios.get(`${API_BASE_URL}/api/products/my?email=${encodeURIComponent(email)}`);
       setUserProducts(response.data);
       setError('');
     } catch (err) {
@@ -36,7 +37,7 @@ const MyListings = () => {
 
     try {
       const email = localStorage.getItem('userEmail') || 'guest@example.com';
-      await axios.delete(`http://localhost:5000/api/products/${productId}`, {
+      await axios.delete(`${API_BASE_URL}/api/products/${productId}`, {
         data: { email }
       });
       setUserProducts(prev => prev.filter(p => p._id !== productId));
@@ -65,7 +66,7 @@ const MyListings = () => {
     e.preventDefault();
     try {
       const email = localStorage.getItem('userEmail') || 'guest@example.com';
-      const response = await axios.put(`http://localhost:5000/api/products/${editingProduct._id}`, {
+      const response = await axios.put(`${API_BASE_URL}/api/products/${editingProduct._id}`, {
         ...editFormData,
         email
       });

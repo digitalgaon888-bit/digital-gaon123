@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 
 const Home = ({ userVillage }) => {
   const [products, setProducts] = useState([]);
@@ -11,7 +12,7 @@ const Home = ({ userVillage }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/products');
+        const response = await axios.get(`${API_BASE_URL}/api/products`);
         setProducts(response.data);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -22,7 +23,7 @@ const Home = ({ userVillage }) => {
 
     const fetchWishlist = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/user/wishlist?email=${encodeURIComponent(email)}`);
+        const response = await axios.get(`${API_BASE_URL}/api/user/wishlist?email=${encodeURIComponent(email)}`);
         setWishlistIds(response.data.map(item => item._id));
       } catch (error) {
         console.error('Error fetching wishlist:', error);
@@ -38,12 +39,12 @@ const Home = ({ userVillage }) => {
 
     try {
       if (isInWishlist) {
-        await axios.delete('http://localhost:5000/api/user/wishlist', {
+        await axios.delete(`${API_BASE_URL}/api/user/wishlist`, {
           data: { email, productId }
         });
         setWishlistIds(prev => prev.filter(id => id !== productId));
       } else {
-        await axios.post('http://localhost:5000/api/user/wishlist', { email, productId });
+        await axios.post(`${API_BASE_URL}/api/user/wishlist`, { email, productId });
         setWishlistIds(prev => [...prev, productId]);
       }
     } catch (error) {
