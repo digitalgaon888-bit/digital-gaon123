@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const db = require('./database'); // Initialize SQLite
+const connectDB = require('./config/db');
+const Product = require('./models/Product');
+const User = require('./models/User'); // If needed for cleanup
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -10,6 +12,9 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Connect to Cloud Database
+connectDB();
 
 // Middleware
 app.use(cors());
@@ -27,37 +32,27 @@ app.use('/api/admin', adminRoutes);
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`--- BACKEND IS LIVE ---`);
     console.log(`Server running on: http://localhost:${PORT}`);
-    console.log(`Database: SQLite (file-based, no server needed)`);
+    console.log(`Database: MongoDB (Atlas)`);
     
     // Start the cleanup job on startup and then run every hour
     startCleanupJob();
 });
 
 // Background Cleanup Job: Remove products older than 24 hours
-function startCleanupJob() {
-    const runCleanup = () => {
+async function startCleanupJob() {
+    const runCleanup = async () => {
         try {
-            console.log('--- RUNNING CLEANUP JOB ---');
+            console.log('--- RUNNING CLEANUP JOB (MongoDB) ---');
             
-            // 1. Delete products older than 24 hours
-            const deleteExpiredProducts = db.prepare(`
-                DELETE FROM products 
-                WHERE createdAt < datetime('now', '-1 day')
-            `);
-            const result = deleteExpiredProducts.run();
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
             
-            if (result.changes > 0) {
-                console.log(`Cleaned up ${result.changes} expired products.`);
-                
-                // 2. Clean up orphaned wishlist items (where product no longer exists)
-                const cleanupWishlist = db.prepare(`
-                    DELETE FROM wishlist 
-                    WHERE productId NOT IN (SELECT id FROM products)
-                `);
-                const wishlistResult = cleanupWishlist.run();
-                if (wishlistResult.changes > 0) {
-                    console.log(`Cleaned up ${wishlistResult.changes} orphaned wishlist items.`);
-                }
+            // Delete products older than 24 hours
+            const result = await Product.deleteMany({
+                createdAt: { $lt: twentyFourHoursAgo }
+            });
+            
+            if (result.deletedCount > 0) {
+                console.log(`Cleaned up ${result.deletedCount} expired products.`);
             } else {
                 console.log('No expired products to clean up.');
             }

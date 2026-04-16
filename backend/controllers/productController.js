@@ -1,4 +1,5 @@
-const db = require('../database');
+const Product = require('../models/Product');
+const User = require('../models/User');
 
 // Add a new product
 exports.addProduct = async (req, res) => {
@@ -9,25 +10,15 @@ exports.addProduct = async (req, res) => {
             return res.status(400).json({ error: 'Please provide all required fields' });
         }
 
-        const stmt = db.prepare(`
-            INSERT INTO products (title, price, category, location, description, sellerEmail, img)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        const result = stmt.run(
-            title, 
-            price, 
-            category, 
-            location, 
-            description || '', 
-            sellerEmail || '', 
-            img || 'https://images.unsplash.com/photo-1592982537447-6f23b3793f77?auto=format&fit=crop&q=80&w=400'
-        );
-
-        const newProduct = db.prepare('SELECT * FROM products WHERE id = ?').get(result.lastInsertRowid);
-
-        // Map id to _id for frontend compatibility
-        newProduct._id = newProduct.id;
+        const newProduct = await Product.create({
+            title,
+            price,
+            category,
+            location,
+            description: description || '',
+            sellerEmail: sellerEmail || '',
+            img: img || 'https://images.unsplash.com/photo-1592982537447-6f23b3793f77?auto=format&fit=crop&q=80&w=400'
+        });
 
         res.status(201).json({ message: 'Product added successfully', product: newProduct });
     } catch (error) {
@@ -39,21 +30,23 @@ exports.addProduct = async (req, res) => {
 // Get all products
 exports.getAllProducts = async (req, res) => {
     try {
-        const products = db.prepare(`
-            SELECT p.*, 
-                   u.name AS sellerName, 
-                   u.village AS sellerVillage, 
-                   u.phone AS sellerPhone, 
-                   u.avatar AS sellerAvatar
-            FROM products p
-            LEFT JOIN users u ON p.sellerEmail = u.email
-            ORDER BY p.createdAt DESC
-        `).all();
+        // In MongoDB, we use populate or manual join if needed. 
+        // Here we can fetch products and manually map seller info if users are in the same DB.
+        const products = await Product.find().sort({ createdAt: -1 }).lean();
+        
+        // Manual join for seller info (simulating SQL JOIN)
+        const productsWithSellers = await Promise.all(products.map(async (p) => {
+            const user = await User.findOne({ email: p.sellerEmail }).lean();
+            return {
+                ...p,
+                sellerName: user?.name || 'Unknown',
+                sellerVillage: user?.village || 'Unknown',
+                sellerPhone: user?.phone || 'Unknown',
+                sellerAvatar: user?.avatar || ''
+            };
+        }));
 
-        // Map id to _id for frontend compatibility
-        const mapped = products.map(p => ({ ...p, _id: p.id }));
-
-        res.status(200).json(mapped);
+        res.status(200).json(productsWithSellers);
     } catch (error) {
         console.error('Fetch Products Error:', error);
         res.status(500).json({ error: 'Failed to fetch products' });
@@ -69,21 +62,20 @@ exports.getMyProducts = async (req, res) => {
             return res.status(400).json({ error: 'Email is required' });
         }
 
-        const products = db.prepare(`
-            SELECT p.*, 
-                   u.name AS sellerName, 
-                   u.village AS sellerVillage, 
-                   u.phone AS sellerPhone, 
-                   u.avatar AS sellerAvatar
-            FROM products p
-            LEFT JOIN users u ON p.sellerEmail = u.email
-            WHERE p.sellerEmail = ? 
-            ORDER BY p.createdAt DESC
-        `).all(email);
+        const products = await Product.find({ sellerEmail: email }).sort({ createdAt: -1 }).lean();
 
-        const mapped = products.map(p => ({ ...p, _id: p.id }));
+        const productsWithSellers = await Promise.all(products.map(async (p) => {
+            const user = await User.findOne({ email: p.sellerEmail }).lean();
+            return {
+                ...p,
+                sellerName: user?.name || 'Unknown',
+                sellerVillage: user?.village || 'Unknown',
+                sellerPhone: user?.phone || 'Unknown',
+                sellerAvatar: user?.avatar || ''
+            };
+        }));
 
-        res.status(200).json(mapped);
+        res.status(200).json(productsWithSellers);
     } catch (error) {
         console.error('Fetch My Products Error:', error);
         res.status(500).json({ error: 'Failed to fetch your products' });
@@ -96,7 +88,7 @@ exports.deleteProduct = async (req, res) => {
         const { id } = req.params;
         const { email } = req.body;
 
-        const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+        const product = await Product.findById(id);
 
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
@@ -107,10 +99,7 @@ exports.deleteProduct = async (req, res) => {
             return res.status(403).json({ error: 'You can only delete your own products' });
         }
 
-        db.prepare('DELETE FROM products WHERE id = ?').run(id);
-
-        // Also remove from all wishlists
-        db.prepare('DELETE FROM wishlist WHERE productId = ?').run(id);
+        await Product.findByIdAndDelete(id);
 
         res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {
@@ -125,7 +114,7 @@ exports.editProduct = async (req, res) => {
         const { id } = req.params;
         const { email, title, price, category, location, description, img } = req.body;
 
-        const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+        const product = await Product.findById(id);
 
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
@@ -135,22 +124,18 @@ exports.editProduct = async (req, res) => {
             return res.status(403).json({ error: 'You can only edit your own products' });
         }
 
-        db.prepare(`
-            UPDATE products 
-            SET title = ?, price = ?, category = ?, location = ?, description = ?, img = ?
-            WHERE id = ?
-        `).run(
-            title || product.title, 
-            price || product.price, 
-            category || product.category, 
-            location || product.location, 
-            description !== undefined ? description : product.description, 
-            img || product.img,
-            id
+        const updatedProduct = await Product.findByIdAndUpdate(
+            id,
+            { 
+                title: title || product.title,
+                price: price || product.price,
+                category: category || product.category,
+                location: location || product.location,
+                description: description !== undefined ? description : product.description,
+                img: img || product.img
+            },
+            { new: true }
         );
-
-        const updatedProduct = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
-        updatedProduct._id = updatedProduct.id;
 
         res.status(200).json({ message: 'Product updated successfully', product: updatedProduct });
     } catch (error) {

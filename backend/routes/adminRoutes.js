@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const db = require('../database');
+const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
 // Middleware to verify admin
-const isAdmin = (req, res, next) => {
+const isAdmin = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) return res.status(401).json({ error: 'No token provided' });
         
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = db.prepare('SELECT role FROM users WHERE email = ?').get(decoded.email);
+        const user = await User.findOne({ email: decoded.email }).lean();
         
         if (user && user.role === 'admin') {
             req.user = decoded;

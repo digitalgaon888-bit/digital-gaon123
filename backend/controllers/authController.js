@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const db = require('../database');
+const Otp = require('../models/Otp');
 const jwt = require('jsonwebtoken');
 
 const transporter = nodemailer.createTransport({
@@ -30,16 +30,15 @@ exports.sendOtp = async (req, res) => {
 
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-        // Save OTP to SQLite (upsert)
-        const existing = db.prepare('SELECT * FROM otps WHERE email = ?').get(email);
-        if (existing) {
-            db.prepare('UPDATE otps SET otp = ?, expiresAt = ? WHERE email = ?').run(otp, expiresAt, email);
-        } else {
-            db.prepare('INSERT INTO otps (email, otp, expiresAt) VALUES (?, ?, ?)').run(email, otp, expiresAt);
-        }
-        console.log('OTP saved to SQLite.');
+        // Save OTP to MongoDB (upsert style)
+        await Otp.findOneAndUpdate(
+            { email },
+            { otp, expiresAt },
+            { upsert: true, new: true }
+        );
+        console.log('OTP saved to MongoDB Cloud.');
 
         if (process.env.DEV_MODE === 'true') {
             console.log('DEV_MODE is true. OTP:', otp);
@@ -48,6 +47,7 @@ exports.sendOtp = async (req, res) => {
                 devOtp: '123456' 
             });
         }
+        // ... rest of email logic ...
 
         // Send email
         const isEmailConfigured = process.env.EMAIL_USER && process.env.EMAIL_USER !== 'your_gmail@gmail.com' && process.env.EMAIL_PASS !== 'your_app_password';
@@ -98,7 +98,7 @@ exports.verifyOtp = async (req, res) => {
             return res.status(200).json({ message: 'OTP verified successfully (DEV MODE)', token });
         }
 
-        const otpRecord = db.prepare('SELECT * FROM otps WHERE email = ? AND otp = ?').get(email, otp);
+        const otpRecord = await Otp.findOne({ email, otp });
 
         if (!otpRecord || new Date(otpRecord.expiresAt) < new Date()) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -108,7 +108,7 @@ exports.verifyOtp = async (req, res) => {
         const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         // Cleanup
-        db.prepare('DELETE FROM otps WHERE email = ?').run(email);
+        await Otp.deleteOne({ email });
 
         res.status(200).json({
             message: 'OTP verified successfully',

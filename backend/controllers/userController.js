@@ -1,4 +1,5 @@
-const db = require('../database');
+const User = require('../models/User');
+const Product = require('../models/Product');
 
 // GET /api/user/profile?email=...
 exports.getProfile = async (req, res) => {
@@ -8,7 +9,7 @@ exports.getProfile = async (req, res) => {
             return res.status(400).json({ message: 'Email is required' });
         }
 
-        let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        let user = await User.findOne({ email });
 
         if (!user) {
             return res.status(200).json({ email, name: '', village: '', phone: '', avatar: '' });
@@ -29,22 +30,12 @@ exports.updateProfile = async (req, res) => {
             return res.status(400).json({ message: 'Email is required' });
         }
 
-        // Upsert: try update first, if no rows affected then insert
-        const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        const user = await User.findOneAndUpdate(
+            { email },
+            { name, village, phone, avatar },
+            { upsert: true, new: true }
+        );
 
-        if (existing) {
-            db.prepare(`
-                UPDATE users SET name = ?, village = ?, phone = ?, avatar = ?, updatedAt = datetime('now')
-                WHERE email = ?
-            `).run(name || '', village || '', phone || '', avatar || '', email);
-        } else {
-            db.prepare(`
-                INSERT INTO users (email, name, village, phone, avatar)
-                VALUES (?, ?, ?, ?, ?)
-            `).run(email, name || '', village || '', phone || '', avatar || '');
-        }
-
-        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
         res.status(200).json(user);
     } catch (error) {
         console.error('Error updating profile:', error);
@@ -60,21 +51,24 @@ exports.getWishlist = async (req, res) => {
             return res.status(400).json({ message: 'Email is required' });
         }
 
-        const items = db.prepare(`
-            SELECT p.*, p.id as _id,
-                   u.name AS sellerName, 
-                   u.village AS sellerVillage, 
-                   u.phone AS sellerPhone, 
-                   u.avatar AS sellerAvatar
-            FROM wishlist w
-            JOIN products p ON w.productId = p.id
-            LEFT JOIN users u ON p.sellerEmail = u.email
-            WHERE w.userEmail = ?
-            ORDER BY w.createdAt DESC
-        `).all(email);
+        const user = await User.findOne({ email }).lean();
+        if (!user || !user.wishlist) {
+            return res.status(200).json([]);
+        }
 
-        // Map id to _id for frontend
-        const mapped = items.map(item => ({ ...item, _id: item.id }));
+        const items = await Product.find({ _id: { $in: user.wishlist } }).lean();
+
+        // Join seller info
+        const mapped = await Promise.all(items.map(async (p) => {
+            const seller = await User.findOne({ email: p.sellerEmail }).lean();
+            return {
+                ...p,
+                sellerName: seller?.name || 'Unknown',
+                sellerVillage: seller?.village || 'Unknown',
+                sellerPhone: seller?.phone || 'Unknown',
+                sellerAvatar: seller?.avatar || ''
+            };
+        }));
 
         res.status(200).json(mapped);
     } catch (error) {
@@ -91,28 +85,24 @@ exports.addToWishlist = async (req, res) => {
             return res.status(400).json({ message: 'Email and productId are required' });
         }
 
-        try {
-            db.prepare(`
-                INSERT OR IGNORE INTO wishlist (userEmail, productId) VALUES (?, ?)
-            `).run(email, productId);
-        } catch (e) {
-            // Duplicate entry, ignore
-        }
+        const user = await User.findOneAndUpdate(
+            { email },
+            { $addToSet: { wishlist: productId } },
+            { upsert: true, new: true }
+        );
 
-        // Return updated wishlist
-        const items = db.prepare(`
-            SELECT p.*, p.id as _id,
-                   u.name AS sellerName, 
-                   u.village AS sellerVillage, 
-                   u.phone AS sellerPhone, 
-                   u.avatar AS sellerAvatar
-            FROM wishlist w
-            JOIN products p ON w.productId = p.id
-            LEFT JOIN users u ON p.sellerEmail = u.email
-            WHERE w.userEmail = ?
-        `).all(email);
-
-        const mapped = items.map(item => ({ ...item, _id: item.id }));
+        // Fetch updated wishlist items
+        const items = await Product.find({ _id: { $in: user.wishlist } }).lean();
+        const mapped = await Promise.all(items.map(async (p) => {
+            const seller = await User.findOne({ email: p.sellerEmail }).lean();
+            return {
+                ...p,
+                sellerName: seller?.name || 'Unknown',
+                sellerVillage: seller?.village || 'Unknown',
+                sellerPhone: seller?.phone || 'Unknown',
+                sellerAvatar: seller?.avatar || ''
+            };
+        }));
 
         res.status(200).json({ message: 'Added to wishlist', wishlist: mapped });
     } catch (error) {
@@ -129,22 +119,24 @@ exports.removeFromWishlist = async (req, res) => {
             return res.status(400).json({ message: 'Email and productId are required' });
         }
 
-        db.prepare('DELETE FROM wishlist WHERE userEmail = ? AND productId = ?').run(email, productId);
+        const user = await User.findOneAndUpdate(
+            { email },
+            { $pull: { wishlist: productId } },
+            { new: true }
+        );
 
-        // Return updated wishlist
-        const items = db.prepare(`
-            SELECT p.*, p.id as _id,
-                   u.name AS sellerName, 
-                   u.village AS sellerVillage, 
-                   u.phone AS sellerPhone, 
-                   u.avatar AS sellerAvatar
-            FROM wishlist w
-            JOIN products p ON w.productId = p.id
-            LEFT JOIN users u ON p.sellerEmail = u.email
-            WHERE w.userEmail = ?
-        `).all(email);
-
-        const mapped = items.map(item => ({ ...item, _id: item.id }));
+        // Fetch updated wishlist items
+        const items = await Product.find({ _id: { $in: (user?.wishlist || []) } }).lean();
+        const mapped = await Promise.all(items.map(async (p) => {
+            const seller = await User.findOne({ email: p.sellerEmail }).lean();
+            return {
+                ...p,
+                sellerName: seller?.name || 'Unknown',
+                sellerVillage: seller?.village || 'Unknown',
+                sellerPhone: seller?.phone || 'Unknown',
+                sellerAvatar: seller?.avatar || ''
+            };
+        }));
 
         res.status(200).json({ message: 'Removed from wishlist', wishlist: mapped });
     } catch (error) {
