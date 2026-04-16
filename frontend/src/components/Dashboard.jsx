@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Home from './Home';
@@ -24,7 +25,7 @@ const Dashboard = ({ onLogout, userEmail }) => {
   useEffect(() => {
     const email = userEmail || localStorage.getItem('userEmail');
     if (email) {
-      axios.get(`/api/user/profile?email=${encodeURIComponent(email)}`)
+      axios.get(`${API_BASE_URL}/api/user/profile?email=${encodeURIComponent(email)}`)
         .then(res => {
           const data = res.data;
           setUser({

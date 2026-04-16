@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 
 const Login = ({ onGoogleLogin }) => {
     const [error, setError] = useState('');
@@ -23,7 +24,7 @@ const Login = ({ onGoogleLogin }) => {
             }
             
             // Send email to backend to trigger OTP
-            await axios.post('/api/auth/send-otp', { email });
+            await axios.post(`${API_BASE_URL}/api/auth/send-otp`, { email });
             
             onGoogleLogin(email);
         } catch (err) {

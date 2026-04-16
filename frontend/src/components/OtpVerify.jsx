@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 
 const OtpVerify = ({ email, onVerifySuccess }) => {
     const [otp, setOtp] = useState('');
@@ -11,7 +12,7 @@ const OtpVerify = ({ email, onVerifySuccess }) => {
         setLoading(true);
         setError('');
         try {
-            const res = await axios.post('/api/auth/verify-otp', { email, otp });
+            const res = await axios.post(`${API_BASE_URL}/api/auth/verify-otp`, { email, otp });
             const { token } = res.data;
             
             // Store JWT token and email

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
 import { Camera, MapPin, Loader2, Save, CheckCircle, AlertCircle, ShieldAlert } from 'lucide-react';
 
 const Profile = ({ user, userEmail, onUpdate }) => {
@@ -43,7 +44,7 @@ const Profile = ({ user, userEmail, onUpdate }) => {
     setSaving(true);
     setSaveMsg('');
     try {
-      const res = await axios.put('/api/user/profile', {
+      const res = await axios.put(`${API_BASE_URL}/api/user/profile`, {
         email,
         name: formData.name,
         village: formData.village,
