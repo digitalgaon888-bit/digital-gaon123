@@ -82,7 +82,7 @@ const AddProduct = () => {
       
       <div className="auth-card" style={{ maxWidth: '800px', margin: '0' }}>
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div className="form-grid-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
             <div>
               <div className="form-group">
                 <label>Product Title</label>
@@ -107,7 +107,7 @@ const AddProduct = () => {
                   required
                 />
               </div>
-
+ 
               <div className="form-group">
                 <label>Category</label>
                 <select 

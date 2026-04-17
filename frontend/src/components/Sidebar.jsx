@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, Package, Heart, User, PlusCircle, Shield } from 'lucide-react';
+import { Home, Package, Heart, User, PlusCircle, Shield, X } from 'lucide-react';
 
-const Sidebar = ({ activeTab, setActiveTab, userRole }) => {
+const Sidebar = ({ activeTab, setActiveTab, userRole, isOpen, onClose }) => {
   const menuItems = [
     { id: 'home', label: 'Home', icon: <Home size={20} /> },
     { id: 'listings', label: 'My Listings', icon: <Package size={20} /> },
@@ -14,8 +14,19 @@ const Sidebar = ({ activeTab, setActiveTab, userRole }) => {
   }
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-logo">Digital Gaon</div>
+    <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <div className="sidebar-header hide-desktop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: '1rem' }}>
+        <div className="sidebar-logo">Digital <span>Gaon</span></div>
+        <button 
+          onClick={onClose} 
+          className="menu-toggle" 
+          style={{ display: 'flex', background: 'transparent', border: 'none', padding: '8px' }}
+        >
+          <X size={24} color="var(--text-muted)" />
+        </button>
+      </div>
+
+      <div className="sidebar-logo hide-mobile" style={{ padding: '2rem' }}>Digital Gaon</div>
       
       <div className="sidebar-nav">
         {menuItems.map((item) => (

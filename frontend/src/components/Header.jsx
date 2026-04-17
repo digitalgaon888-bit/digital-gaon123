@@ -1,10 +1,14 @@
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 
-const Header = ({ userName, onLogout }) => {
+const Header = ({ userName, onLogout, onMenuToggle }) => {
   return (
     <header className="header">
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button className="menu-toggle" onClick={onMenuToggle} aria-label="Toggle Menu">
+          <Menu size={24} />
+        </button>
+
         <div style={{ 
           width: '35px', 
           height: '35px', 
@@ -14,7 +18,8 @@ const Header = ({ userName, onLogout }) => {
           alignItems: 'center',
           justifyContent: 'center',
           fontWeight: '700',
-          fontSize: '0.9rem'
+          fontSize: '0.9rem',
+          flexShrink: 0
         }}>
           {userName ? userName[0].toUpperCase() : 'U'}
         </div>
@@ -25,7 +30,7 @@ const Header = ({ userName, onLogout }) => {
 
       <button onClick={onLogout} className="btn btn-danger" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <LogOut size={16} />
-        Logout
+        <span className="hide-mobile">Logout</span>
       </button>
     </header>
   );

@@ -14,6 +14,7 @@ import AdminPanel from './AdminPanel';
 
 const Dashboard = ({ onLogout, userEmail }) => {
   const [activeTab, setActiveTab] = useState('home');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState({
     name: '',
     village: '',
@@ -47,6 +48,14 @@ const Dashboard = ({ onLogout, userEmail }) => {
     setUser(updatedUser);
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
@@ -68,10 +77,29 @@ const Dashboard = ({ onLogout, userEmail }) => {
 
   return (
     <div className="dashboard-layout">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} userRole={user.role} />
+      {/* Overlay for mobile */}
+      <div 
+        className={`sidebar-overlay ${isSidebarOpen ? 'show' : ''}`} 
+        onClick={closeSidebar}
+      ></div>
+
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          closeSidebar(); // Close on mobile navigation
+        }} 
+        userRole={user.role} 
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+      />
       
       <div className="main-wrapper">
-        <Header userName={user.name} onLogout={onLogout} />
+        <Header 
+          userName={user.name} 
+          onLogout={onLogout} 
+          onMenuToggle={toggleSidebar}
+        />
         
         <main className="content-area">
           {renderContent()}

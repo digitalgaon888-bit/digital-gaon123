@@ -56,9 +56,18 @@ const FarmerChatbot = () => {
       image: selectedImage ? selectedImage.dataUrl : null
     };
     
+    // Get last 10 messages for context
+    const chatHistory = messages.slice(-10).map(m => ({
+      sender: m.sender,
+      text: m.text
+    }));
+
     setMessages(prev => [...prev, userMessage]);
     
-    let payload = { message: input || "Describe this image" };
+    let payload = { 
+      message: input || "Describe this image",
+      history: chatHistory 
+    };
     if (selectedImage) {
       const base64Data = selectedImage.dataUrl.split(',')[1];
       payload.image = {
@@ -78,14 +87,43 @@ const FarmerChatbot = () => {
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      if (!response.ok) throw new Error("Server error");
 
-      if (response.ok) {
-        setMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
-      } else {
-        setMessages(prev => [...prev, { sender: 'ai', text: `Error: ${data.error || 'Server error'}` }]);
+      // Handle Streaming
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      // Add empty AI message to start streaming into
+      setMessages(prev => [...prev, { sender: 'ai', text: '' }]);
+      
+      let fullText = "";
+      let firstChunk = true;
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        if (firstChunk) {
+          setIsLoading(false); // Hide typing indicator once we have text
+          firstChunk = false;
+        }
+        
+        const chunk = decoder.decode(value, { stream: true });
+        
+        // Convert literal backslash+n (\n) to actual newline if present
+        // and handle other potential escaping issues from the stream
+        fullText += chunk.replace(/\\n/g, '\n'); 
+        
+        // Update the last message (the AI's empty one) with new text
+        setMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1].text = fullText;
+          return newMessages;
+        });
       }
+
     } catch (error) {
+      console.error("Chat Error:", error);
       setMessages(prev => [...prev, { sender: 'ai', text: 'Network connection error. Please try again later.' }]);
     } finally {
       setIsLoading(false);

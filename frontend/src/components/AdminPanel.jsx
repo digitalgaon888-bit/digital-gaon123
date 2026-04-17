@@ -100,12 +100,12 @@ const AdminPanel = () => {
                     </h1>
                 </div>
 
-                <div className="flex gap-4 mb-8">
+                <div className="tabs-wrapper">
                     <button 
                         onClick={() => setActiveTab('stats')}
                         className={`tab-btn ${activeTab === 'stats' ? 'active' : ''}`}
                     >
-                        <BarChart3 className="w-4 h-4" /> Overview
+                        < BarChart3 className="w-4 h-4" /> Overview
                     </button>
                     <button 
                         onClick={() => setActiveTab('users')}

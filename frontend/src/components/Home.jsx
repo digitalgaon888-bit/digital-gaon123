@@ -133,7 +133,7 @@ const Home = ({ userVillage }) => {
         )}
       </div>
 
-      <div>
+      <div style={{ marginBottom: '3rem' }}>
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Latest Listings</h2>
         {latestListings.length > 0 && (
           <div className="card-grid">
@@ -142,7 +142,7 @@ const Home = ({ userVillage }) => {
         )}
       </div>
 
-      <div style={{ 
+      <div className="marketplace-banner" style={{ 
         marginTop: '3rem', 
         padding: '2rem', 
         background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(0, 0, 0, 0.2))', 
@@ -152,7 +152,7 @@ const Home = ({ userVillage }) => {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <div className="banner-content" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <div style={{ 
             width: '60px', 
             height: '60px', 
@@ -160,7 +160,8 @@ const Home = ({ userVillage }) => {
             background: 'rgba(239, 68, 68, 0.2)', 
             display: 'flex', 
             alignItems: 'center', 
-            justifyContent: 'center' 
+            justifyContent: 'center',
+            flexShrink: 0
           }}>
             <Flame size={32} color="#ef4444" />
           </div>

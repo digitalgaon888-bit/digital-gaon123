@@ -50,12 +50,12 @@ const ProductDetailModal = ({ product, onClose }) => {
             <div style={{ display: 'inline-flex', padding: '4px 10px', background: 'rgba(139, 92, 246, 0.2)', backdropFilter: 'blur(8px)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '99px', color: '#fff', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '8px', alignItems: 'center', gap: '4px' }}>
               <Tag size={12} /> {product.category}
             </div>
-            <h2 style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', margin: '0 0 5px 0', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{product.title}</h2>
+            <h2 className="modal-title" style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', margin: '0 0 5px 0', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{product.title}</h2>
           </div>
         </div>
         
         {/* Details Section */}
-        <div style={{ padding: '25px', position: 'relative' }}>
+        <div className="modal-content-inner" style={{ padding: '25px', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: 'var(--radius-md)' }}>
@@ -65,7 +65,7 @@ const ProductDetailModal = ({ product, onClose }) => {
                 <ShieldCheck size={16} /> Verified Listing
               </span>
             </div>
-            <div style={{ fontSize: '2.2rem', fontWeight: '800', background: 'linear-gradient(135deg, #fff, var(--primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <div className="modal-price" style={{ fontSize: '2.2rem', fontWeight: '800', background: 'linear-gradient(135deg, #fff, var(--primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               ₹{product.price}
             </div>
           </div>
