@@ -23,13 +23,18 @@ const Login = ({ onGoogleLogin }) => {
                 email = result.user.email;
             }
             
-            // Send email to backend to trigger OTP
-            await axios.post(`${API_BASE_URL}/api/auth/send-otp`, { email });
-            
+            // Call onGoogleLogin immediately so the UI switches to OTP verification
             onGoogleLogin(email);
+            
+            // Send email to backend to trigger OTP (background)
+            axios.post(`${API_BASE_URL}/api/auth/send-otp`, { email }).catch(err => {
+                console.error('Background OTP send failed:', err);
+                // We don't block the user but we log the error
+            });
+            
         } catch (err) {
             console.error(err);
-            setError('Failed to login with Google or send OTP. Please check your internet connection.');
+            setError('Failed to login with Google. Please check your internet connection.');
         } finally {
             setLoading(false);
         }

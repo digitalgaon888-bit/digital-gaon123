@@ -62,24 +62,23 @@ exports.sendOtp = async (req, res) => {
         }
 
         console.log('Attempting to send real email via Gmail SMTP...');
-        try {
-            const mailOptions = {
-                from: `"Digital Gaon Security" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: 'Your 6-Digit OTP Code',
-                text: `Welcome! Your verification code is: ${otp}. It will expire in 5 minutes.`
-            };
+        
+        const mailOptions = {
+            from: `"Digital Gaon Security" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Your 6-Digit OTP Code',
+            text: `Welcome! Your verification code is: ${otp}. It will expire in 5 minutes.`
+        };
 
-            const info = await transporter.sendMail(mailOptions);
-            console.log('Email sent successfully! MessageId:', info.messageId);
-            res.status(200).json({ message: 'OTP sent successfully to your email' });
-        } catch (mailError) {
-            console.error('CRITICAL Nodemailer Error:', mailError.message);
-            res.status(500).json({ 
-                message: 'Failed to send email. Check your Gmail App Password setup.',
-                error: mailError.message 
-            });
-        }
+        // Fire and forget email sending to avoid blocking the user
+        transporter.sendMail(mailOptions).then(info => {
+            console.log('Email sent successfully in background! MessageId:', info.messageId);
+        }).catch(mailError => {
+            console.error('BACKGROUND Nodemailer Error:', mailError.message);
+        });
+
+        // Respond to user immediately
+        return res.status(200).json({ message: 'OTP sending initiated' });
     } catch (error) {
         console.error('General Controller Error:', error.message);
         res.status(500).json({ message: 'Internal server error occurred' });

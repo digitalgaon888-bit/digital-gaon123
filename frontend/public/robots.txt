@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /config/
+Disallow: /.env
+
+Sitemap: https://digital-gaon.vercel.app/sitemap.xml
