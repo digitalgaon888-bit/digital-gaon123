@@ -13,6 +13,16 @@ const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Senior Fix: Priority Middlewares (Parser first)
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// Senior Diagnostics: Global Request Logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toLocaleTimeString()}] INCOMING: ${req.method} ${req.path}`);
+    next();
+});
+
 // Connect to Cloud Database
 connectDB();
 
@@ -34,8 +44,6 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -43,6 +51,18 @@ app.use('/api/products', productRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Senior Diagnostics: Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('--- GLOBAL ERROR CAUGHT ---');
+    console.error('Path:', req.path);
+    console.error('Method:', req.method);
+    console.error('Message:', err.message);
+    if (err.type === 'entity.too.large') {
+        console.error('REASON: Payload size exceeds limit!');
+    }
+    res.status(err.status || 500).json({ error: err.message || 'Server Internal Error' });
+});
 
 // Start Server
 app.listen(PORT, '0.0.0.0', () => {

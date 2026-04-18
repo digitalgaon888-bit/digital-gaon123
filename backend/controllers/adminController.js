@@ -7,8 +7,6 @@ exports.getStats = async (req, res) => {
         const userCount = await User.countDocuments();
         const productCount = await Product.countDocuments();
         
-        // In MongoDB, wishlist is an array in User. 
-        // We can sum up the lengths or just show total users with wishlist items.
         const usersWithWishlist = await User.find({ "wishlist.0": { $exists: true } });
         const wishlistTotalCount = usersWithWishlist.reduce((acc, user) => acc + user.wishlist.length, 0);
         
@@ -70,12 +68,8 @@ exports.deleteUser = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        
         await Product.findByIdAndDelete(id);
-        
-        // Remove from all wishlists in MongoDB
         await User.updateMany({}, { $pull: { wishlist: id } });
-        
         res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error('Admin Delete Product Error:', error);
