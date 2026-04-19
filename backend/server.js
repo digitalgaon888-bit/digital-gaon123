@@ -9,6 +9,7 @@ const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const adRoutes = require('./routes/adRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -45,12 +46,18 @@ app.use(cors({
     credentials: true
 }));
 
+// Diagnostics Routes
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'Backend is reachable', time: new Date().toISOString() });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/ads', adRoutes); // Keep this for public GET /active, but adminRoutes will handle the rest via nesting
 
 // Senior Diagnostics: Global Error Handler
 app.use((err, req, res, next) => {

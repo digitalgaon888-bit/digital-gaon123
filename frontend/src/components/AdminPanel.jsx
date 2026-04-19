@@ -1,15 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Users, ShoppingBag, Trash2, Shield, BarChart3, Search } from 'lucide-react';
+import { Users, ShoppingBag, Trash2, Shield, BarChart3, Search, Megaphone, Plus, ExternalLink, Power, Camera } from 'lucide-react';
 import API_BASE_URL from '../config/api';
 
 const AdminPanel = () => {
+    const fileInputRef = useRef(null);
     const [activeTab, setActiveTab] = useState('stats');
     const [stats, setStats] = useState({ users: 0, products: 0, wishlistItems: 0 });
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
+    const [ads, setAds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [newAd, setNewAd] = useState({ title: '', imageUrl: '', redirectUrl: '', placement: 'grid' });
+    const [isAddingAd, setIsAddingAd] = useState(false);
 
     const API_URL = '/api/admin';
 
@@ -59,9 +63,23 @@ const AdminPanel = () => {
         }
     };
 
+    const fetchAds = async () => {
+        setLoading(true);
+        try {
+            console.log('Fetching ads from:', `${API_BASE_URL}/api/admin/ads`);
+            const res = await axios.get(`${API_BASE_URL}/api/admin/ads`, getHeaders());
+            setAds(res.data);
+        } catch (err) {
+            console.error('Error fetching ads:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (activeTab === 'users') fetchUsers();
         if (activeTab === 'products') fetchProducts();
+        if (activeTab === 'ads') fetchAds();
     }, [activeTab]);
 
     const handleDeleteUser = async (id) => {
@@ -86,6 +104,62 @@ const AdminPanel = () => {
         }
     };
 
+    const handleCreateAd = async (e) => {
+        e.preventDefault();
+        try {
+            console.log('Saving ad to:', `${API_BASE_URL}/api/admin/ads`);
+            await axios.post(`${API_BASE_URL}/api/admin/ads`, newAd, getHeaders());
+            alert('Advertisement saved successfully!');
+            setNewAd({ title: '', imageUrl: '', redirectUrl: '', placement: 'grid' });
+            setIsAddingAd(false);
+            fetchAds();
+        } catch (err) {
+            console.error('Ad creation error:', err);
+            const errMsg = err.response?.data?.error || err.response?.data?.message || err.message;
+            alert('Failed to save ad: ' + errMsg);
+        }
+    };
+
+    const handleDeleteAd = async (id) => {
+        console.log('--- FRONTEND: Attempting to delete ad via POST with ID:', id);
+        
+        try {
+            // Using POST to /ads/delete/:id for maximum reliability across environments
+            const res = await axios.post(`${API_BASE_URL}/api/admin/ads/delete/${id}`, {}, getHeaders());
+            console.log('--- FRONTEND: Delete Response:', res.status, res.data);
+            alert('Advertisement deleted successfully');
+            fetchAds();
+        } catch (err) {
+            console.error('--- FRONTEND: Ad deletion error:', err);
+            const errMsg = err.response?.data?.error || err.response?.data?.message || err.message;
+            alert('Failed to delete ad: ' + errMsg);
+        }
+    };
+
+    const handleToggleAd = async (id) => {
+        try {
+            await axios.patch(`${API_BASE_URL}/api/admin/ads/${id}/toggle`, {}, getHeaders());
+            fetchAds();
+        } catch (err) {
+            alert('Failed to toggle ad status');
+        }
+    };
+
+    const handleAdFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Image size should be less than 2MB');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setNewAd({ ...newAd, imageUrl: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const filteredUsers = users.filter(u => 
         u.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
         (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -94,6 +168,10 @@ const AdminPanel = () => {
     const filteredProducts = products.filter(p => 
         p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
         p.sellerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const filteredAds = ads.filter(a => 
+        a.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (loading && activeTab === 'stats') {
@@ -158,6 +236,13 @@ const AdminPanel = () => {
                         >
                             <ShoppingBag size={18} /> 
                             <span>Products</span>
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('ads')}
+                            className={`tab-btn ${activeTab === 'ads' ? 'active' : ''}`}
+                        >
+                            <Megaphone size={18} /> 
+                            <span>Ads</span>
                         </button>
                     </div>
                 </div>
@@ -286,6 +371,171 @@ const AdminPanel = () => {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Ads Management View */}
+                {activeTab === 'ads' && (
+                    <div className="animate-fadeIn">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div className="admin-search-container" style={{ flex: 1, marginBottom: 0 }}>
+                                <div style={{ position: 'relative', flex: 1 }}>
+                                    <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', width: '16px' }} />
+                                    <input 
+                                        className="admin-search-input"
+                                        type="text"
+                                        placeholder="Search ads by title..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setIsAddingAd(!isAddingAd)}
+                                className="btn btn-primary" 
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}
+                            >
+                                <Plus size={18} />
+                                {isAddingAd ? 'Close Form' : 'New Ad'}
+                            </button>
+                        </div>
+
+                        {/* Add Ad Form */}
+                        {isAddingAd && (
+                            <form onSubmit={handleCreateAd} style={{ background: 'rgba(255,255,255,0.02)', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>Ad Image (Local Upload)</label>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            style={{ display: 'none' }} 
+                                            ref={fileInputRef}
+                                            onChange={handleAdFileChange}
+                                        />
+                                        <div 
+                                            onClick={() => fileInputRef.current.click()}
+                                            style={{ 
+                                                border: '2px dashed rgba(255,255,255,0.1)', 
+                                                borderRadius: '12px', 
+                                                padding: '1.5rem', 
+                                                textAlign: 'center',
+                                                background: 'rgba(0,0,0,0.2)',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            {newAd.imageUrl ? (
+                                                <img src={newAd.imageUrl} alt="Preview" style={{ maxHeight: '100px', borderRadius: '8px' }} />
+                                            ) : (
+                                                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                                    <Camera size={24} style={{ marginBottom: '0.5rem' }} /><br/>
+                                                    Click to select image from device
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div style={{ gridColumn: 'span 1' }}>
+                                        <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>Ad Title</label>
+                                        <input 
+                                            type="text" 
+                                            className="admin-search-input" 
+                                            style={{ paddingLeft: '1rem' }}
+                                            value={newAd.title} 
+                                            onChange={(e) => setNewAd({...newAd, title: e.target.value})} 
+                                            required 
+                                        />
+                                    </div>
+                                    <div style={{ gridColumn: 'span 1' }}>
+                                        <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>Redirect URL (Optional)</label>
+                                        <input 
+                                            type="text" 
+                                            className="admin-search-input" 
+                                            style={{ paddingLeft: '1rem' }}
+                                            placeholder="https://example.com"
+                                            value={newAd.redirectUrl} 
+                                            onChange={(e) => setNewAd({...newAd, redirectUrl: e.target.value})} 
+                                        />
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>Placement Type</label>
+                                        <select 
+                                            className="admin-search-input" 
+                                            style={{ paddingLeft: '1rem', appearance: 'none' }}
+                                            value={newAd.placement} 
+                                            onChange={(e) => setNewAd({...newAd, placement: e.target.value})} 
+                                            required 
+                                        >
+                                            <option value="grid">Grid Ad (Between products)</option>
+                                            <option value="main">Main Ad (Top Banner)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <button type="submit" className="btn btn-primary">Save Ad</button>
+                                    <button type="button" className="btn" style={{ background: 'rgba(255,255,255,0.05)' }} onClick={() => setIsAddingAd(false)}>Cancel</button>
+                                </div>
+                            </form>
+                        )}
+
+                        {/* Ads List */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                            {filteredAds.map(ad => (
+                                <div key={ad._id} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                                    <img src={ad.imageUrl} alt={ad.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                                    <div style={{ padding: '1.25rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                                            <div>
+                                                <h3 style={{ margin: 0, fontSize: '1rem', color: 'white' }}>{ad.title}</h3>
+                                                <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                                                    <span style={{ 
+                                                        padding: '0.15rem 0.4rem', 
+                                                        borderRadius: '4px', 
+                                                        fontSize: '0.55rem', 
+                                                        fontWeight: '800', 
+                                                        background: ad.placement === 'main' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                                                        color: ad.placement === 'main' ? '#c084fc' : 'var(--text-muted)',
+                                                        border: `1px solid ${ad.placement === 'main' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`
+                                                    }}>
+                                                        {ad.placement ? ad.placement.toUpperCase() : 'GRID'}
+                                                    </span>
+                                                </div>
+                                                <a href={ad.redirectUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', marginTop: '4px' }}>
+                                                    <ExternalLink size={12} /> View Link
+                                                </a>
+                                            </div>
+                                            <span style={{ 
+                                                padding: '0.2rem 0.6rem', 
+                                                borderRadius: '6px', 
+                                                fontSize: '0.6rem', 
+                                                fontWeight: '800', 
+                                                background: ad.isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)', 
+                                                color: ad.isActive ? '#10b981' : 'var(--text-muted)' 
+                                            }}>
+                                                {ad.isActive ? 'ACTIVE' : 'INACTIVE'}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                                            <button 
+                                                onClick={() => handleToggleAd(ad._id)} 
+                                                style={{ background: 'transparent', border: 'none', color: ad.isActive ? '#ef4444' : '#10b981', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '0.8rem', gap: '4px', fontWeight: '600' }}
+                                            >
+                                                <Power size={14} /> {ad.isActive ? 'Disable' : 'Enable'}
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    if(window.confirm('Are you sure you want to delete this ad?')) {
+                                                        handleDeleteAd(ad._id);
+                                                    }
+                                                }} 
+                                                style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '0.8rem', gap: '4px', fontWeight: '600' }}
+                                            >
+                                                <Trash2 size={14} /> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
