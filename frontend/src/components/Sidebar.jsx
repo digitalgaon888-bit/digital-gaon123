@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Package, Heart, User, PlusCircle, Shield, X, BookOpen } from 'lucide-react';
+import { Home, Package, Heart, User, PlusCircle, Shield, X, BookOpen, TrendingUp } from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab, userRole, isOpen, onClose }) => {
   const menuItems = [
@@ -8,6 +8,7 @@ const Sidebar = ({ activeTab, setActiveTab, userRole, isOpen, onClose }) => {
     { id: 'wishlist', label: 'Wishlist', icon: <Heart size={20} /> },
     { id: 'profile', label: 'Profile Settings', icon: <User size={20} /> },
     { id: 'khata', label: 'Digital Khata', icon: <BookOpen size={20} /> },
+    { id: 'study', label: 'Study Streak', icon: <TrendingUp size={20} /> },
   ];
 
   if (userRole === 'admin') {

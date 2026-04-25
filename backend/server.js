@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const Product = require('./models/Product');
 const User = require('./models/User'); // If needed for cleanup
 const Expense = require('./models/Expense');
+const StudyEntry = require('./models/StudyEntry');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -12,6 +13,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const adRoutes = require('./routes/adRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
+const studyRoutes = require('./routes/studyRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -61,6 +63,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ads', adRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/study', studyRoutes);
 
 // Senior Diagnostics: Global Error Handler
 app.use((err, req, res, next) => {
@@ -111,6 +114,31 @@ async function startCleanupJob() {
             
             if (expenseResult.deletedCount > 0) {
                 console.log(`Cleaned up ${expenseResult.deletedCount} old khata entries (older than 30 days).`);
+            }
+
+            // Delete Study entries older than 90 days (keeps ~3 months of streak history)
+            const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+            const studyResult = await StudyEntry.deleteMany({
+                date: { $lt: ninetyDaysAgo }
+            });
+            if (studyResult.deletedCount > 0) {
+                console.log(`Cleaned up ${studyResult.deletedCount} old study entries (older than 90 days).`);
+            }
+
+            // Clean orphaned wishlist IDs (product was deleted but ID still in wishlist)
+            const allProductIds = await Product.find({}, '_id').lean();
+            const validIds = new Set(allProductIds.map(p => p._id.toString()));
+            const usersWithWishlists = await User.find({ wishlist: { $exists: true, $ne: [] } }, 'wishlist').lean();
+            let wishlistCleaned = 0;
+            for (const u of usersWithWishlists) {
+                const cleanedList = u.wishlist.filter(id => validIds.has(id.toString()));
+                if (cleanedList.length !== u.wishlist.length) {
+                    await User.findByIdAndUpdate(u._id, { wishlist: cleanedList });
+                    wishlistCleaned += (u.wishlist.length - cleanedList.length);
+                }
+            }
+            if (wishlistCleaned > 0) {
+                console.log(`Cleaned ${wishlistCleaned} orphaned wishlist entries.`);
             }
         } catch (error) {
             console.error('Cleanup Job Error:', error);

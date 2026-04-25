@@ -769,7 +769,7 @@ body {
   cursor: not-allowed;
 }
 
-/* Voice mic button — active/listening state */
+/* Voice mic button â€” active/listening state */
 .btn-voice-active {
   background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;

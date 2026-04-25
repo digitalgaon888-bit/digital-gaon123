@@ -12,6 +12,7 @@ import Profile from './Profile';
 import FarmerChatbot from './FarmerChatbot';
 import AdminPanel from './AdminPanel';
 import ExpenseTracker from './ExpenseTracker';
+import StudyStreak from './StudyStreak';
 
 const Dashboard = ({ onLogout, userEmail }) => {
   const [activeTab, setActiveTab] = useState('home');
@@ -77,6 +78,8 @@ const Dashboard = ({ onLogout, userEmail }) => {
         return <Profile user={user} userEmail={userEmail || localStorage.getItem('userEmail')} onUpdate={handleProfileUpdate} />;
       case 'khata':
         return <ExpenseTracker userEmail={userEmail || localStorage.getItem('userEmail')} />;
+      case 'study':
+        return <StudyStreak userEmail={userEmail || localStorage.getItem('userEmail')} />;
       default:
         return <Home userVillage={user.village} />;
     }
