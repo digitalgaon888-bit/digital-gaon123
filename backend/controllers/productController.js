@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const User = require('../models/User');
+const cloudinary = require('../config/cloudinary');
 
 // Add a new product
 exports.addProduct = async (req, res) => {
@@ -10,6 +11,26 @@ exports.addProduct = async (req, res) => {
             return res.status(400).json({ error: 'Please provide all required fields' });
         }
 
+        let imageUrl = 'https://images.unsplash.com/photo-1592982537447-6f23b3793f77?auto=format&fit=crop&q=80&w=400';
+
+        // If image is base64, upload to Cloudinary
+        if (img && img.startsWith('data:image')) {
+            try {
+                const uploadResult = await cloudinary.uploader.upload(img, {
+                    folder: 'digital-gaon/products',
+                    transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }]
+                });
+                imageUrl = uploadResult.secure_url;
+                console.log('✅ Image uploaded to Cloudinary:', imageUrl);
+            } catch (uploadErr) {
+                console.error('Cloudinary upload error:', uploadErr.message);
+                // fallback to base64 if upload fails
+                imageUrl = img;
+            }
+        } else if (img) {
+            imageUrl = img;
+        }
+
         const newProduct = await Product.create({
             title,
             price,
@@ -17,7 +38,7 @@ exports.addProduct = async (req, res) => {
             location,
             description: description || '',
             sellerEmail: sellerEmail || '',
-            img: img || 'https://images.unsplash.com/photo-1592982537447-6f23b3793f77?auto=format&fit=crop&q=80&w=400'
+            img: imageUrl
         });
 
         res.status(201).json({ message: 'Product added successfully', product: newProduct });
@@ -26,6 +47,7 @@ exports.addProduct = async (req, res) => {
         res.status(500).json({ error: 'Something went wrong while adding product' });
     }
 };
+
 
 // Get all products
 exports.getAllProducts = async (req, res) => {

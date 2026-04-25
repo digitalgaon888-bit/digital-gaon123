@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const Otp = require('../models/Otp');
 const jwt = require('jsonwebtoken');
-
+const User = require('../models/User');
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
@@ -94,6 +94,14 @@ exports.verifyOtp = async (req, res) => {
 
         if (process.env.DEV_MODE === 'true' && otp === '123456') {
             const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            
+            // Ensure user is created in database during DEV_MODE login
+            await User.findOneAndUpdate(
+                { email },
+                { $setOnInsert: { email } },
+                { upsert: true, new: true }
+            );
+            
             return res.status(200).json({ message: 'OTP verified successfully (DEV MODE)', token });
         }
 
@@ -105,6 +113,13 @@ exports.verifyOtp = async (req, res) => {
 
         // OTP verified, create JWT
         const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // Ensure user is created in database
+        await User.findOneAndUpdate(
+            { email },
+            { $setOnInsert: { email } },
+            { upsert: true, new: true }
+        );
 
         // Cleanup
         await Otp.deleteOne({ email });
