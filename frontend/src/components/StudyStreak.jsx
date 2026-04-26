@@ -147,7 +147,7 @@ const StudyStreak = ({ userEmail }) => {
     statVal:(color)=>({ fontSize:'2rem', fontWeight:900, color, lineHeight:1 }),
     statLbl:{ fontSize:'0.72rem', color:'rgba(255,255,255,0.45)', marginTop:6, fontWeight:600, letterSpacing:'0.04em', textTransform:'uppercase' },
     // Grid
-    mainGrid:{ display:'grid', gridTemplateColumns:'1fr 370px', gap:'1.5rem', alignItems:'start' },
+    mainGrid:{ display:'grid', gridTemplateColumns:'1fr 370px', gap:'1.5rem', alignItems:'start', width:'100%' },
     // Cards
     card:{ background:'rgba(17,24,39,0.75)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:24, padding:'1.5rem', backdropFilter:'blur(20px)' },
     // Calendar
@@ -232,7 +232,7 @@ const StudyStreak = ({ userEmail }) => {
       )}
 
       {/* ── Stats Row ── */}
-      <div style={ss.statsRow}>
+      <div className="ss-stats-row" style={ss.statsRow}>
         {[
           {icon:'🔥',val:current, color:'#34d399',accent:'rgba(16,185,129,0.2)',lbl:'Current Streak'},
           {icon:'🏆',val:longest, color:'#fbbf24',accent:'rgba(251,191,36,0.2)',lbl:'Best Streak'},
@@ -248,7 +248,7 @@ const StudyStreak = ({ userEmail }) => {
       </div>
 
       {/* ── Main Grid ── */}
-      <div style={ss.mainGrid}>
+      <div className="ss-main-grid" style={ss.mainGrid}>
 
         {/* ── Calendar ── */}
         <div style={{...ss.card, position:'relative'}}>
@@ -478,12 +478,21 @@ const StudyStreak = ({ userEmail }) => {
 
       {/* Responsive overrides */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap');
         @media(max-width:900px){
-          .ss-main-grid{ grid-template-columns:1fr !important; }
-          .ss-stats-row{ grid-template-columns:repeat(2,1fr) !important; }
+          .ss-main-grid{
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+          }
+          .ss-stats-row{
+            grid-template-columns: repeat(2,1fr) !important;
+          }
         }
         @media(max-width:480px){
-          .ss-stats-row{ gap:0.6rem !important; }
+          .ss-stats-row{
+            grid-template-columns: repeat(2,1fr) !important;
+            gap: 0.6rem !important;
+          }
         }
       `}</style>
     </div>
