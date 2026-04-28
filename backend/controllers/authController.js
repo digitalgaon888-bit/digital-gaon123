@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
 exports.sendOtp = async (req, res) => {
     console.log('--- Send OTP Request Received ---');
     try {
-        const { email } = req.body;
+        const email = req.body.email?.toLowerCase();
         console.log('Email to send to:', email);
 
         if (!email) {
@@ -87,7 +87,8 @@ exports.sendOtp = async (req, res) => {
 
 exports.verifyOtp = async (req, res) => {
     try {
-        const { email, otp } = req.body;
+        const email = req.body.email?.toLowerCase();
+        const { otp } = req.body;
         if (!email || !otp) {
             return res.status(400).json({ message: 'Email and OTP are required' });
         }

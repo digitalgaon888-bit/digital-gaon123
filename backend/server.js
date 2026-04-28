@@ -32,7 +32,9 @@ const pashuRoutes = require('./routes/pashuRoutes');
 const hotelRoutes = require('./routes/hotelRoutes');
 const yatraRoutes = require('./routes/yatraRoutes');
 const agriRoutes = require('./routes/agriRoutes');
+const healthRoutes = require('./routes/healthRoutes');
 const AgriSale = require('./models/AgriSale');
+const HealthQueue = require('./models/HealthQueue');
 
 
 const app = express();
@@ -91,6 +93,7 @@ app.use('/api/pashu', pashuRoutes);
 app.use('/api/hotel', hotelRoutes);
 app.use('/api/yatra', yatraRoutes);
 app.use('/api/agri', agriRoutes);
+app.use('/api/health', healthRoutes);
 
 
 // Senior Diagnostics: Global Error Handler
@@ -231,6 +234,13 @@ async function startCleanupJob() {
             const agriResult = await AgriSale.deleteMany({ date: { $lt: sixtyDaysAgo } });
             if (agriResult.deletedCount > 0) {
                 console.log(`Cleaned up ${agriResult.deletedCount} old Krishi Kendra sales.`);
+            }
+
+            // Reset Health Queue (older than 24 hours)
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const healthResult = await HealthQueue.deleteMany({ date: { $lt: oneDayAgo } });
+            if (healthResult.deletedCount > 0) {
+                console.log(`Reset ${healthResult.deletedCount} old Health tokens.`);
             }
 
             // Clean orphaned wishlist IDs (product was deleted but ID still in wishlist)

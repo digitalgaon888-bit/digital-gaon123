@@ -19,6 +19,7 @@ import PashuSaathi from './PashuSaathi';
 import YatraSaathi from './YatraSaathi';
 import HotelSaathi from './HotelSaathi';
 import KrishiKendra from './KrishiKendra';
+import HealthSaathi from './HealthSaathi';
 import FeatureLock from './FeatureLock';
 
 const Dashboard = ({ onLogout, userEmail }) => {
@@ -123,6 +124,12 @@ const Dashboard = ({ onLogout, userEmail }) => {
           return (
             <FeatureLock feature="agri" userEmail={userEmail || localStorage.getItem('userEmail')}>
               <KrishiKendra userEmail={userEmail || localStorage.getItem('userEmail')} />
+            </FeatureLock>
+          );
+        case 'health':
+          return (
+            <FeatureLock feature="health" userEmail={userEmail || localStorage.getItem('userEmail')}>
+              <HealthSaathi userEmail={userEmail || localStorage.getItem('userEmail')} />
             </FeatureLock>
           );
       default:

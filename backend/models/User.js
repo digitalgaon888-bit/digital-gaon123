@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema({
     enum: ['none', 'pending', 'approved'],
     default: 'none'
   },
+  healthAccess: {
+    type: String,
+    enum: ['none', 'pending', 'approved'],
+    default: 'none'
+  },
 }, { timestamps: true, bufferCommands: false });
 
 module.exports = primaryDB.model('User', userSchema);

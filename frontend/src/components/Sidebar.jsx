@@ -12,6 +12,7 @@ const Sidebar = ({ activeTab, setActiveTab, userRole, isOpen, onClose }) => {
     { id: 'dairy', label: 'Dairy Saathi', icon: <Milk size={20} /> },
     { id: 'pashu', label: 'Pashu Saathi', icon: <Stethoscope size={20} /> },
     { id: 'agri', label: 'Agri Saathi', icon: <Sprout size={20} /> },
+    { id: 'health', label: 'Health Saathi', icon: <Heart size={20} /> },
     { id: 'yatra', label: 'Yatra Saathi', icon: <Car size={20} /> },
     { id: 'hotel', label: 'Hotel Saathi', icon: <Hotel size={20} /> },
   ];

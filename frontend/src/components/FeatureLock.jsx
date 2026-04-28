@@ -7,20 +7,25 @@ const FeatureLock = ({ feature, userEmail, children }) => {
   const [status, setStatus] = useState('loading'); // loading | none | pending | approved
   const [requesting, setRequesting] = useState(false);
 
-  const fieldKey = feature === 'yatra' ? 'yatraAccess' : (feature === 'pashu' ? 'pashuAccess' : (feature === 'vyapar' ? 'vyaparAccess' : (feature === 'hotel' ? 'hotelAccess' : (feature === 'agri' ? 'agriAccess' : 'dairyAccess'))));
-  const featureName = feature === 'yatra' ? 'Yatra Saathi' : (feature === 'pashu' ? 'Pashu Saathi' : (feature === 'vyapar' ? 'Vyapar Saathi' : (feature === 'hotel' ? 'Hotel Saathi' : (feature === 'agri' ? 'Agri Saathi' : 'Dairy Saathi'))));
-  const featureEmoji = feature === 'yatra' ? '🚕' : (feature === 'pashu' ? '🩺' : (feature === 'vyapar' ? '🛒' : (feature === 'hotel' ? '🏨' : (feature === 'agri' ? '🚜' : '🐄'))));
-  const accentColor = feature === 'yatra' ? '#f59e0b' : (feature === 'pashu' ? '#10b981' : (feature === 'vyapar' ? '#8b5cf6' : (feature === 'hotel' ? '#fbbf24' : (feature === 'agri' ? '#10b981' : '#10b981'))));
-  const accentBg = feature === 'yatra' ? 'rgba(245,158,11,0.15)' : (feature === 'pashu' ? 'rgba(16,185,129,0.15)' : (feature === 'vyapar' ? 'rgba(139,92,246,0.15)' : (feature === 'hotel' ? 'rgba(251,191,36,0.15)' : (feature === 'agri' ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.15)'))));
+  const configs = {
+    vyapar: { name: 'Vyapar Saathi', icon: '🛒', color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)', field: 'vyaparAccess' },
+    dairy: { name: 'Dairy Saathi', icon: '🐄', color: '#10b981', bg: 'rgba(16,185,129,0.15)', field: 'dairyAccess' },
+    pashu: { name: 'Pashu Saathi', icon: '🩺', color: '#10b981', bg: 'rgba(16,185,129,0.15)', field: 'pashuAccess' },
+    yatra: { name: 'Yatra Saathi', icon: '🚕', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', field: 'yatraAccess' },
+    hotel: { name: 'Hotel Saathi', icon: '🏨', color: '#fbbf24', bg: 'rgba(251,191,36,0.15)', field: 'hotelAccess' },
+    agri: { name: 'Agri Saathi', icon: '🚜', color: '#10b981', bg: 'rgba(16,185,129,0.15)', field: 'agriAccess' },
+    health: { name: 'Health Saathi', icon: '🏥', color: '#ef4444', bg: 'rgba(239,68,68,0.15)', field: 'healthAccess' }
+  };
 
+  const config = configs[feature] || configs.dairy;
   const email = userEmail || localStorage.getItem('userEmail');
 
   useEffect(() => {
     if (!email) return;
     axios.get(`${API_BASE_URL}/api/access/status?email=${encodeURIComponent(email)}`)
-      .then(res => setStatus(res.data[fieldKey] || 'none'))
+      .then(res => setStatus(res.data[config.field] || 'none'))
       .catch(() => setStatus('none'));
-  }, [email, fieldKey]);
+  }, [email, config.field]);
 
   const handleRequest = async () => {
     setRequesting(true);
@@ -45,13 +50,13 @@ const FeatureLock = ({ feature, userEmail, children }) => {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', padding: '2rem', fontFamily: "'Outfit', sans-serif" }}>
       <div style={{ textAlign: 'center', maxWidth: '440px', width: '100%' }}>
         {/* Lock Icon */}
-        <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: accentBg, border: `2px solid ${accentColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', fontSize: '2.5rem' }}>
-          {status === 'pending' ? <Clock size={40} color={accentColor} /> : <Lock size={40} color={accentColor} />}
+        <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: config.bg, border: `2px solid ${config.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', fontSize: '2.5rem' }}>
+          {status === 'pending' ? <Clock size={40} color={config.color} /> : <Lock size={40} color={config.color} />}
         </div>
 
         {/* Feature Name */}
-        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{featureEmoji}</div>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#fff', margin: '0 0 0.75rem' }}>{featureName}</h2>
+        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{config.icon}</div>
+        <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#fff', margin: '0 0 0.75rem' }}>{config.name}</h2>
 
         {status === 'none' && (
           <>
@@ -62,7 +67,7 @@ const FeatureLock = ({ feature, userEmail, children }) => {
             <button
               onClick={handleRequest}
               disabled={requesting}
-              style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`, color: '#fff', border: 'none', padding: '1rem 2.5rem', borderRadius: '14px', fontSize: '1rem', fontWeight: '700', cursor: requesting ? 'not-allowed' : 'pointer', fontFamily: "'Outfit', sans-serif", boxShadow: `0 8px 24px ${accentColor}40`, transition: 'all 0.2s', opacity: requesting ? 0.7 : 1 }}
+              style={{ background: `linear-gradient(135deg, ${config.color}, ${config.color}cc)`, color: '#fff', border: 'none', padding: '1rem 2.5rem', borderRadius: '14px', fontSize: '1rem', fontWeight: '700', cursor: requesting ? 'not-allowed' : 'pointer', fontFamily: "'Outfit', sans-serif", boxShadow: `0 8px 24px ${config.color}40`, transition: 'all 0.2s', opacity: requesting ? 0.7 : 1 }}
             >
               {requesting ? '⏳ Request bhej rahe hain...' : '🔓 Access Request Karo'}
             </button>

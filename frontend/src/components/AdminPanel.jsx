@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Users, ShoppingBag, Trash2, Shield, BarChart3, Search, Megaphone, Plus, ExternalLink, Power, Camera, Store, Milk, CheckCircle2, XCircle, Stethoscope, Car, Hotel, Sprout } from 'lucide-react';
+import { Users, ShoppingBag, Trash2, Shield, BarChart3, Search, Megaphone, Plus, ExternalLink, Power, Camera, Store, Milk, CheckCircle2, XCircle, Stethoscope, Car, Hotel, Sprout, Heart } from 'lucide-react';
 import API_BASE_URL from '../config/api';
 
 const AdminPanel = () => {
@@ -12,8 +12,8 @@ const AdminPanel = () => {
     const [ads, setAds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pendingRequests, setPendingRequests] = useState({ vyapar: [], dairy: [], pashu: [], yatra: [], hotel: [], agri: [] });
-    const [approvedUsers, setApprovedUsers] = useState({ vyapar: [], dairy: [], pashu: [], yatra: [], hotel: [], agri: [] });
+    const [pendingRequests, setPendingRequests] = useState({ vyapar: [], dairy: [], pashu: [], yatra: [], hotel: [], agri: [], health: [] });
+    const [approvedUsers, setApprovedUsers] = useState({ vyapar: [], dairy: [], pashu: [], yatra: [], hotel: [], agri: [], health: [] });
     const [newAd, setNewAd] = useState({ title: '', imageUrl: '', redirectUrl: '', placement: 'grid' });
     const [isAddingAd, setIsAddingAd] = useState(false);
 
@@ -52,7 +52,8 @@ const AdminPanel = () => {
                 pashu: res.data.pashu || [],
                 yatra: res.data.yatra || [],
                 hotel: res.data.hotel || [],
-                agri: res.data.agri || []
+                agri: res.data.agri || [],
+                health: res.data.health || []
             });
         } catch (err) { console.error('Error fetching access requests:', err); }
     };
@@ -74,7 +75,8 @@ const AdminPanel = () => {
                 pashu: res.data.pashu || [],
                 yatra: res.data.yatra || [],
                 hotel: res.data.hotel || [],
-                agri: res.data.agri || []
+                agri: res.data.agri || [],
+                health: res.data.health || []
             });
         } catch (err) { console.error('Error fetching approved users:', err); }
     };
@@ -266,9 +268,9 @@ const AdminPanel = () => {
                     <button onClick={() => setActiveTab('products')} className={`tab-btn ${activeTab === 'products' ? 'active' : ''}`}><ShoppingBag size={18} /> Products</button>
                     <button onClick={() => setActiveTab('ads')} className={`tab-btn ${activeTab === 'ads' ? 'active' : ''}`}><Megaphone size={18} /> Ads</button>
                     
-                    {['vyapar', 'dairy', 'pashu', 'yatra', 'hotel', 'agri'].map(feat => (
+                    {['vyapar', 'dairy', 'pashu', 'yatra', 'hotel', 'agri', 'health'].map(feat => (
                         <button key={feat} onClick={() => setActiveTab(`${feat}-requests`)} className={`tab-btn ${activeTab === `${feat}-requests` ? 'active' : ''}`} style={{position:'relative'}}>
-                            {feat === 'vyapar' ? <Store size={18}/> : feat === 'dairy' ? <Milk size={18}/> : feat === 'pashu' ? <Stethoscope size={18}/> : feat === 'yatra' ? <Car size={18}/> : feat === 'hotel' ? <Hotel size={18}/> : <Sprout size={18}/>}
+                            {feat === 'vyapar' ? <Store size={18}/> : feat === 'dairy' ? <Milk size={18}/> : feat === 'pashu' ? <Stethoscope size={18}/> : feat === 'yatra' ? <Car size={18}/> : feat === 'hotel' ? <Hotel size={18}/> : feat === 'agri' ? <Sprout size={18}/> : <Heart size={18} color="#ef4444"/>}
                             <span style={{textTransform:'capitalize'}}>{feat}</span>
                             {pendingRequests[feat]?.length > 0 && <span style={{position:'absolute', top:'-5px', right:'-5px', background:'#ef4444', color:'#fff', borderRadius:'50%', width:'18px', height:'18px', fontSize:'0.6rem', display:'flex', alignItems:'center', justifyContent:'center'}}>{pendingRequests[feat].length}</span>}
                         </button>
@@ -303,6 +305,7 @@ const AdminPanel = () => {
                 {activeTab === 'yatra-requests' && renderAccessView('yatra', <Car size={20} color="#f59e0b" />, '#f59e0b', 'Yatra Saathi')}
                 {activeTab === 'hotel-requests' && renderAccessView('hotel', <Hotel size={20} color="#fbbf24" />, '#fbbf24', 'Hotel Saathi')}
                 {activeTab === 'agri-requests' && renderAccessView('agri', <Sprout size={20} color="#10b981" />, '#10b981', 'Agri Saathi')}
+                {activeTab === 'health-requests' && renderAccessView('health', <Heart size={20} color="#ef4444" />, '#ef4444', 'Health Saathi')}
 
             </div>
             <style>{`
