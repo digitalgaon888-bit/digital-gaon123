@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { secondaryDB } = require('../config/db');
 
 const hotelUdhaarSchema = new mongoose.Schema({
     email: { type: String, required: true },
@@ -9,4 +10,4 @@ const hotelUdhaarSchema = new mongoose.Schema({
     isSettle: { type: Boolean, default: false }
 });
 
-module.exports = mongoose.model('HotelUdhaar', hotelUdhaarSchema);
+module.exports = secondaryDB.model('HotelUdhaar', hotelUdhaarSchema);

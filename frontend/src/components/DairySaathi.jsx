@@ -217,7 +217,7 @@ const DairySaathi = ({ userEmail }) => {
       doc.text('Digital Gaon — Dairy Saathi', 14, 290);
       doc.text(`Page ${p} of ${tp}`, pw - 14, 290, { align: 'right' });
     }
-    doc.save(`dairy-summary-${months[billMonth]}-${billYear}.pdf`);
+    const pdfOutput = doc.output('blob'); const pdfBlob = new Blob([pdfOutput], { type: 'application/pdf' }); const url = URL.createObjectURL(pdfBlob); window.open(url, '_blank'); setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
   const handleDownloadCustomerBill = async (b) => {
@@ -283,7 +283,7 @@ const DairySaathi = ({ userEmail }) => {
       doc.setFontSize(8); doc.setTextColor(156, 163, 175);
       doc.text('This is a computer generated receipt.', pw / 2, 285, { align: 'center' });
 
-      doc.save(`bill-${b.customerName}-${months[billMonth]}.pdf`);
+      const pdfOutput = doc.output('blob'); const pdfBlob = new Blob([pdfOutput], { type: 'application/pdf' }); const url = URL.createObjectURL(pdfBlob); window.open(url, '_blank'); setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (err) {
       console.error(err);
       alert('Bill download karne mein galti hui.');

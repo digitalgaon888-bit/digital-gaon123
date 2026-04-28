@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { secondaryDB } = require('../config/db');
 
 const pashuAnimalSchema = new mongoose.Schema({
   email: { type: String, required: true },
@@ -14,4 +15,4 @@ const pashuAnimalSchema = new mongoose.Schema({
   notes: { type: String, default: '' },
 }, { timestamps: true });
 
-module.exports = mongoose.model('PashuAnimal', pashuAnimalSchema);
+module.exports = secondaryDB.model('PashuAnimal', pashuAnimalSchema);

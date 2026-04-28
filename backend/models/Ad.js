@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { primaryDB } = require('../config/db');
 
 const adSchema = new mongoose.Schema({
   title: {
@@ -24,4 +25,4 @@ const adSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Ad', adSchema);
+module.exports = primaryDB.model('Ad', adSchema);

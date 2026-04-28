@@ -13,6 +13,7 @@ router.get('/customers', async (req, res) => {
         const customers = await DairyCustomer.find({ email, isActive: true }).sort({ customerName: 1 });
         res.json(customers);
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -26,6 +27,7 @@ router.post('/customers', async (req, res) => {
         await customer.save();
         res.status(201).json(customer);
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -36,6 +38,7 @@ router.delete('/customers/:id', async (req, res) => {
         await DairyCustomer.findByIdAndDelete(req.params.id);
         res.json({ message: 'Customer deleted' });
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -57,6 +60,7 @@ router.get('/entries', async (req, res) => {
         const entries = await DairyEntry.find(filter).sort({ date: 1 }); // Sort by date ascending for bills
         res.json(entries);
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -72,6 +76,7 @@ router.post('/entries', async (req, res) => {
         await entry.save();
         res.status(201).json(entry);
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -82,6 +87,7 @@ router.put('/entries/:id/pay', async (req, res) => {
         const entry = await DairyEntry.findByIdAndUpdate(req.params.id, { isPaid: true }, { new: true });
         res.json(entry);
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -92,6 +98,7 @@ router.delete('/entries/:id', async (req, res) => {
         await DairyEntry.findByIdAndDelete(req.params.id);
         res.json({ message: 'Entry deleted' });
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -132,6 +139,7 @@ router.get('/monthly-bill', async (req, res) => {
 
         res.json(Object.values(billMap));
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -150,6 +158,7 @@ router.get('/udhaar', async (req, res) => {
         const udhaar = await DairyUdhaar.find({ email, isSettle: false }).sort({ date: -1 });
         res.json(udhaar);
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -163,6 +172,7 @@ router.post('/udhaar', async (req, res) => {
         await entry.save();
         res.status(201).json(entry);
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -173,6 +183,7 @@ router.delete('/udhaar/:id', async (req, res) => {
         await DairyUdhaar.findByIdAndDelete(req.params.id);
         res.json({ message: 'Udhaar settled' });
     } catch (err) {
+        console.error('--- DAIRY ERROR ---', err);
         res.status(500).json({ error: 'Server error' });
     }
 });

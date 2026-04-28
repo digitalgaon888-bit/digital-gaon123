@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { primaryDB } = require('../config/db');
 
 const expenseSchema = new mongoose.Schema({
   userEmail: {
@@ -36,4 +37,4 @@ const expenseSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Expense', expenseSchema);
+module.exports = primaryDB.model('Expense', expenseSchema);

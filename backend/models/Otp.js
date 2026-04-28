@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { primaryDB } = require('../config/db');
 
 const otpSchema = new mongoose.Schema({
     email: {
@@ -16,4 +17,4 @@ const otpSchema = new mongoose.Schema({
     }
 }, { timestamps: true, bufferCommands: false });
 
-module.exports = mongoose.model('Otp', otpSchema);
+module.exports = primaryDB.model('Otp', otpSchema);

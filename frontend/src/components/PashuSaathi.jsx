@@ -166,7 +166,7 @@ const PashuSaathi = ({ userEmail }) => {
       if (y > 280) { doc.addPage(); y = 20; }
     });
     
-    doc.save('pashu-report.pdf');
+    const pdfOutput = doc.output('blob'); const pdfBlob = new Blob([pdfOutput], { type: 'application/pdf' }); const url = URL.createObjectURL(pdfBlob); window.open(url, '_blank'); setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
   const filteredAnimals = animals.filter(a => 

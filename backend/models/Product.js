@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { primaryDB } = require('../config/db');
 
 const productSchema = new mongoose.Schema({
   title: {
@@ -33,4 +34,4 @@ const productSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = primaryDB.model('Product', productSchema);

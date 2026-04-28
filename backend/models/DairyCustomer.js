@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { secondaryDB } = require('../config/db');
 
 // Dairy Customer — who gets milk daily
 const dairyCustomerSchema = new mongoose.Schema({
@@ -11,4 +12,4 @@ const dairyCustomerSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('DairyCustomer', dairyCustomerSchema);
+module.exports = secondaryDB.model('DairyCustomer', dairyCustomerSchema);

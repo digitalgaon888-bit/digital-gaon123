@@ -54,7 +54,7 @@ const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 const StudyStreak = ({ userEmail }) => {
   const [entryMap, setEntryMap] = useState({});
-  const [loading,   setLoading]   = useState(true);
+  const [loading,   setLoading]   = useState(false); // Senior Fix: UI is instant now
   const [submitting,setSubmitting]= useState(false);
   const [topic,     setTopic]     = useState('');
   const [duration,  setDuration]  = useState('');
@@ -205,7 +205,7 @@ const StudyStreak = ({ userEmail }) => {
         doc.text(`Page ${p} of ${totalPages}`, pageWidth - 14, 290, { align: 'right' });
       }
 
-      doc.save(`study-report-${monthName}-${calYear}.pdf`);
+      const pdfOutput = doc.output('blob'); const pdfBlob = new Blob([pdfOutput], { type: 'application/pdf' }); const url = URL.createObjectURL(pdfBlob); window.open(url, '_blank'); setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (e) {
       console.error(e);
       alert('PDF generation failed.');
@@ -400,10 +400,10 @@ const StudyStreak = ({ userEmail }) => {
           </div>
 
           {loading&&(
-            <div style={ss.spinnerWrap}>
+            <div style={{position:'absolute', top:10, right:10, display:'flex', alignItems:'center', gap:6, fontSize:'0.7rem', color:'rgba(255,255,255,0.4)'}}>
               <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-              <div style={{width:32,height:32,border:'3px solid rgba(139,92,246,0.2)',borderTopColor:'#8b5cf6',borderRadius:'50%',animation:'spin 0.7s linear infinite'}}/>
-              <span>Loading...</span>
+              <div style={{width:12,height:12,border:'2px solid rgba(139,92,246,0.2)',borderTopColor:'#8b5cf6',borderRadius:'50%',animation:'spin 0.7s linear infinite'}}/>
+              Updating...
             </div>
           )}
         </div>

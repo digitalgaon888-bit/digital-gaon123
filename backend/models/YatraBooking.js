@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { secondaryDB } = require('../config/db');
 
 const YatraBookingSchema = new mongoose.Schema({
     userEmail: { type: String, required: true },
@@ -12,4 +13,4 @@ const YatraBookingSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('YatraBooking', YatraBookingSchema);
+module.exports = secondaryDB.model('YatraBooking', YatraBookingSchema);

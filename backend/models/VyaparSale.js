@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { secondaryDB } = require('../config/db');
 
 const vyaparSaleSchema = new mongoose.Schema({
     email: {
@@ -27,4 +28,4 @@ const vyaparSaleSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('VyaparSale', vyaparSaleSchema);
+module.exports = secondaryDB.model('VyaparSale', vyaparSaleSchema);

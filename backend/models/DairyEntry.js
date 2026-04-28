@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { secondaryDB } = require('../config/db');
 
 // Daily milk delivery entry per customer
 const dairyEntrySchema = new mongoose.Schema({
@@ -14,4 +15,4 @@ const dairyEntrySchema = new mongoose.Schema({
     isPaid: { type: Boolean, default: false }
 }, { timestamps: true });
 
-module.exports = mongoose.model('DairyEntry', dairyEntrySchema);
+module.exports = secondaryDB.model('DairyEntry', dairyEntrySchema);

@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db');
+// Database connections are managed in config/db.js
+const { primaryDB, secondaryDB } = require('./config/db');
 const Product = require('./models/Product');
 const User = require('./models/User'); // If needed for cleanup
 const Expense = require('./models/Expense');
@@ -45,7 +46,7 @@ app.use((req, res, next) => {
 });
 
 // Connect to Cloud Database
-connectDB();
+// Connections initialized automatically in config/db.js
 
 // Middleware
 const allowedOrigins = [

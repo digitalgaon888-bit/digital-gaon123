@@ -43,6 +43,7 @@ exports.getEntries = async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
     const entries = await StudyEntry.find({ userEmail: email.toLowerCase() })
+      .select('date topic duration status')
       .sort({ date: -1 })
       .lean();
 

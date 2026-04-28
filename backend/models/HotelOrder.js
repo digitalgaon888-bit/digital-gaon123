@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { secondaryDB } = require('../config/db');
 
 const hotelOrderSchema = new mongoose.Schema({
     email: { type: String, required: true },
@@ -13,4 +14,4 @@ const hotelOrderSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('HotelOrder', hotelOrderSchema);
+module.exports = secondaryDB.model('HotelOrder', hotelOrderSchema);

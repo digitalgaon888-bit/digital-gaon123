@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { primaryDB } = require('../config/db');
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -54,4 +55,4 @@ const userSchema = new mongoose.Schema({
   },
 }, { timestamps: true, bufferCommands: false });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = primaryDB.model('User', userSchema);

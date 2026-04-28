@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { secondaryDB } = require('../config/db');
 
 const pashuTreatmentSchema = new mongoose.Schema({
   email: { type: String, required: true },
@@ -16,4 +17,4 @@ const pashuTreatmentSchema = new mongoose.Schema({
   nextDueDate: { type: Date, default: null },
 }, { timestamps: true });
 
-module.exports = mongoose.model('PashuTreatment', pashuTreatmentSchema);
+module.exports = secondaryDB.model('PashuTreatment', pashuTreatmentSchema);
